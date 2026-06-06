@@ -23,7 +23,7 @@ class MLP(torch.nn.Module):
     def forward(self, x): 
         h = x 
         for hidden in self.layers[:-1]: 
-            h = F.relu(hidden(h)) 
+            h = F.relu(hidden(h)) #Implementación futura-> que permita cambiar la función
         output = self.layers[-1] 
         y = output(h) 
         return y 
@@ -48,11 +48,12 @@ class MLPTrainer:
         # Usamos el total de datos del dataset recibido para calcular los batches
         total_images = len(self.mnist_dataset)
         images_per_fold = total_images / self.k_folds #IMPORTANTE mejora futura-> si el usuario ingresa por ejemplo 100, se rompe el código
-        self.batch_size = int((total_images - images_per_fold) / self.batch_number) 
+        self.batch_size = int((total_images - images_per_fold) / self.batch_number) # CONSULTAR--> Al usar total_imagenes hace que sea muy pesado. 
+                                                                                    # Posible cambio: self.batch_size = batch_size y usar uno predeterminado ej 64 o que se ingrese por teclado
         
         # Inicialización de la matriz de almacenamiento de accuracy
         self.acc = np.zeros([self.repeticiones * self.k_folds, self.epochs]) 
-        self.criterion = nn.CrossEntropyLoss()
+        self.criterion = nn.CrossEntropyLoss() #Función de costo
 
 #Ejecuta el loop de entrenamiento por folds y epochs"
     def entrenar(self):
@@ -64,7 +65,7 @@ class MLPTrainer:
                 print(f"\n--- Ejecución {r+1} | Fold {fold+1}/{self.k_folds} ---")
                 
                 
-                model = MLP([28*28, 10]) 
+                model = MLP([28*28, 10]) #Mejora futura-> ahora como está adentro del for cada vez que itera (cada fold que pasa) se borra lo anterior entonces podríamos ver una manera en la cual de alguna manera se guarden los datos previos
                 optimizer = optim.Adam(model.parameters(), lr=0.001) 
 
                 # Subsets para el fold actual--> en vez de copiar las imagenes las visita. Es como una vista a las imagenes
@@ -112,7 +113,7 @@ class MLPTrainer:
                         
         return self.acc
 
-#Genera el gráfico final de las curvas obtenidas-> CONSULTAR
+#Genera el gráfico final de las curvas obtenidas-> CONSULTAR: ¿Es mejor esto o dejamos matplotlib?
 
     def graficar(self):
         
@@ -159,9 +160,9 @@ def cargar_datos_eficiente(usar_entrenamiento=True):
             transform=transform
         )
         
-        # Aplanado e indexación manteniendo nombres originales
-        X = dataset.data.view(-1, 28*28).float() / 255.0
-        y = dataset.targets
+        # Aplana el tamaño de las imágenes
+        X = dataset.data.view(-1, 28*28).float() / 255.0 #toma la grilla de cada imagen y estira sus filas una detrás de otra hasta transformarla en una única línea continua de 784 píxeles
+        y = dataset.targets #etiquetas reales asociadas a cada imagen
         
         key = 'train' if modo else 'test'
         datasets_cargados[key] = TensorDataset(X, y)
@@ -178,7 +179,7 @@ def cargar_datos_eficiente(usar_entrenamiento=True):
 
 # PROGRAMA PRINCIPAL
 def solicitar_parametro(mensaje, valor_defecto):
-    """Función auxiliar para consultar valores manteniendo el predeterminado"""
+    #Función auxiliar para consultar valores manteniendo el predeterminado
     respuesta = input(f"{mensaje} [Por defecto: {valor_defecto}]: ").strip()
     if respuesta == "":
         return valor_defecto
@@ -189,7 +190,7 @@ def solicitar_parametro(mensaje, valor_defecto):
 def main():
     print("    ---  MENU PRINCIPAL   ---    ")
     
-    # 1. Preguntar qué datos utilizar utilizando el nuevo flujo eficiente
+    # Preguntar qué datos utilizar utilizando el nuevo flujo eficiente
     resp_datos = input("¿Desea usar los datos de entrenamiento? (S/N) [Por defecto: S]: ").strip().upper()
     usar_entrenamiento = False if resp_datos == "N" else True
     
@@ -232,7 +233,7 @@ def main():
     print("\n[INFO] Iniciando Pipeline de Entrenamiento...")
     print(f"Configuración final -> Kfolds: {k_folds}, Batches: {batch_number}, Epochs: {epochs}, Repeticiones: {repeticiones}")
     
-    # 3. Instanciar la clase controladora y correr el proceso
+    # Instanciar la clase controladora y correr el proceso
     trainer = MLPTrainer(mnist_dataset, k_folds, batch_number, epochs, repeticiones)
     trainer.entrenar()
     
