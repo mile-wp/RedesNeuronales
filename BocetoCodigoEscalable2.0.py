@@ -75,7 +75,7 @@ class MLPTrainer:
 
                 #Ahora dataloader solo procesa datos que fueron filtrados por subset-> CONSULTAR
                 train_loader = DataLoader(train_subsampler, batch_size=self.batch_size, shuffle=True) #Para training
-                val_loader = DataLoader(val_subsampler, batch_size=self.batch_size, shuffle=False)  #Para validation
+                val_loader = DataLoader(val_subsampler, batch_size=len(val_subsampler), shuffle=False)  #Para validation
 
                 for epoch in range(self.epochs):
                     # ===== TRAIN =====
@@ -161,7 +161,7 @@ def cargar_datos_eficiente(usar_entrenamiento=True):
         )
         
         # Aplana el tamaño de las imágenes
-        X = dataset.data.view(-1, 28*28).float() / 255.0 #toma la grilla de cada imagen y estira sus filas una detrás de otra hasta transformarla en una única línea continua de 784 píxeles
+        X = dataset.data.reshape(-1, 28*28).float() / 255.0 #toma la grilla de cada imagen y estira sus filas una detrás de otra hasta transformarla en una única línea continua de 784 píxeles
         y = dataset.targets #etiquetas reales asociadas a cada imagen
         
         key = 'train' if modo else 'test'
