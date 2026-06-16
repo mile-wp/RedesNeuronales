@@ -12,6 +12,8 @@ import os
 import torchvision 
 import torchvision.transforms as transforms 
 
+import time #Para usar de contador del tiempo que tarda cada epoch
+
 
 class MLP(torch.nn.Module):
     def __init__(self, sizes): 
@@ -77,7 +79,11 @@ class MLPTrainer:
                 train_loader = DataLoader(train_subsampler, batch_size=self.batch_size, shuffle=True) #Para training
                 val_loader = DataLoader(val_subsampler, batch_size=len(val_subsampler), shuffle=False)  #Para validation
 
+
                 for epoch in range(self.epochs):
+                    inicio_epoch = time.time() # CAMBIO Iniciamos el cronómetro
+
+
                     # ===== TRAIN =====
                     model.train()
                     train_loss = 0.0
@@ -106,10 +112,16 @@ class MLPTrainer:
                     # Guardado indexado dinámicamente
                     indice_fila = fold + (r * self.k_folds) #En vez del 5 ponemos self para que pueda funcionar con cualquier cantidad de kfolds que le settemos
                     self.acc[indice_fila, epoch] = val_acc 
+
+
+                    tiempo_epoch = time.time() - inicio_epoch #CAMBIO
+
+
                     
                     # En vez de imprimir todos los epochs va imprimiendo periodicamente para que no se sature la consola-> CONSULTAR
                     if (epoch + 1) % 25 == 0 or epoch == 0:
-                        print(f"Epoch {epoch+1:03d}/{self.epochs} | Loss: {train_loss:.4f} | Val Acc: {val_acc:.4f}")#Para que quede más prolijo por consola
+                        #Para que quede más prolijo por consola 
+                        print(f"Epoch {epoch+1:03d}/{self.epochs} | Loss: {train_loss:.4f} | Val Acc: {val_acc:.4f} | Tiempo: {tiempo_epoch:.2f}s") #Agregamos el cronómetro
                         
         return self.acc
 
