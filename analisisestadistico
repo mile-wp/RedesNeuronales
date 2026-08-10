@@ -1,0 +1,73 @@
+import numpy as np
+import matplotlib.pyplot as plt
+import os
+
+def main():
+    print("=== ANÁLISIS ESTADÍSTICO Y GRÁFICO POR ÉPOCA ===")
+    
+    ruta_historial = os.path.join(os.path.dirname(__file__), "historial_entrenamiento.npz")
+    
+    if not os.path.exists(ruta_historial):
+        print(f"\n[ERROR] No se encuentra el archivo '{ruta_historial}'.")
+        print("Por favor, ejecuta primero 'main.py' para generar los resultados de entrenamiento.")
+        return
+
+    # Cargar datos
+    data = np.load(ruta_historial)
+    train_loss = data['train_loss'] # Shape: (repeticiones, k_folds, epochs)
+    val_acc = data['val_acc']       # Shape: (repeticiones, k_folds, epochs)
+    
+    repeticiones, k_folds, epochs = train_loss.shape
+    
+    print(f"Dimensiones analizadas -> Repeticiones: {repeticiones} | Folds: {k_folds} | Epochs: {epochs}\n")
+    
+    # Aplanamos repeticiones y folds para calcular la estadística global por época (eje 2)
+    train_loss_reshaped = train_loss.reshape(-1, epochs)
+    val_acc_reshaped = val_acc.reshape(-1, epochs)
+    
+    # Calcular medias y desviaciones estándar (dispersión) por época
+    media_loss = np.mean(train_loss_reshaped, axis=0)
+    std_loss = np.std(train_loss_reshaped, axis=0)
+    
+    media_acc = np.mean(val_acc_reshaped, axis=0)
+    std_acc = np.std(val_acc_reshaped, axis=0)
+    
+    # Mostrar tabla de resultados estadísticos
+    print(f"{'Época':<8} | {'Loss Media':<12} | {'Loss Std (Disp)':<16} | {'Val Acc Media':<14} | {'Val Acc Std (Disp)':<18}")
+    print("-" * 80)
+    
+    for ep in range(epochs):
+        print(f"{ep+1:<8} | {media_loss[ep]:<12.4f} | {std_loss[ep]:<16.4f} | {media_acc[ep]:<14.4f} | {std_acc[ep]:<18.4f}")
+    
+    print("-" * 80)
+
+    # --- GENERAR GRÁFICO ESTADÍSTICO ---
+    epochs_eje = np.arange(1, epochs + 1)
+    
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 5))
+    
+    # Gráfico 1: Training Loss con banda de dispersión
+    ax1.plot(epochs_eje, media_loss, label='Loss Media', color='blue', marker='o')
+    ax1.fill_between(epochs_eje, media_loss - std_loss, media_loss + std_loss, color='blue', alpha=0.2, label='Dispersión (±1 Std)')
+    ax1.set_title("Evolución de la Pérdida (Loss) por Época")
+    ax1.set_xlabel("Épocas")
+    ax1.set_ylabel("Loss")
+    ax1.grid(True, linestyle=":", alpha=0.7)
+    ax1.legend()
+    
+    # Gráfico 2: Validation Accuracy con banda de dispersión
+    ax2.plot(epochs_eje, media_acc, label='Accuracy Media', color='green', marker='s')
+    ax2.fill_between(epochs_eje, media_acc - std_acc, media_acc + std_acc, color='green', alpha=0.2, label='Dispersión (±1 Std)')
+    ax2.set_title("Evolución del Accuracy de Validación por Época")
+    ax2.set_xlabel("Épocas")
+    ax2.set_ylabel("Accuracy")
+    ax2.grid(True, linestyle=":", alpha=0.7)
+    ax2.legend()
+    
+    plt.tight_layout()
+    plt.savefig("analisis_estadistico_epoch.png", dpi=300)
+    print("\n[INFO] Gráfico estadístico guardado como 'analisis_estadistico_epoch.png'")
+    plt.show()
+
+if __name__ == "__main__":
+    main()
