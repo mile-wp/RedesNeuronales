@@ -1,13 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Created on Mon Aug 10 11:36:45 2026
-
-@author: walter
-"""
-
-#Red para entrenar con los datos importados del archivo generardatos
-
 import time
 import torch
 import torch.nn as nn 
@@ -54,7 +44,7 @@ def calcular_accuracy(predicciones, etiquetas):
     pred_clase = predicciones.argmax(dim=1) 
     return (pred_clase == etiquetas).float().mean().item() 
 
-# Entrenador con Gráfico: Accuracy vs K-Folds
+# Entrenador con Gráfico Original: Accuracy vs K-Folds
 class MLPTrainer:
     def __init__(self, datos_lista, k_folds, batch_number, epochs, repeticiones, lr=0.01):
         self.k_folds = k_folds
@@ -73,7 +63,11 @@ class MLPTrainer:
         samples_per_fold = total_samples / self.k_folds 
         self.batch_size = max(1, int((total_samples - samples_per_fold) / self.batch_number)) 
         
+        # Historiales para guardar todo por epoch, fold y repetición
+        self.train_loss_hist = np.zeros((self.repeticiones, self.k_folds, self.epochs))
+        self.val_acc_hist = np.zeros((self.repeticiones, self.k_folds, self.epochs))
         self.acc_por_fold = np.zeros((self.repeticiones, self.k_folds))
+        
         self.criterion = nn.MSELoss() 
 
     def entrenar(self):
@@ -93,7 +87,6 @@ class MLPTrainer:
                 train_loader = DataLoader(train_subsampler, batch_size=self.batch_size, shuffle=True) 
                 val_loader = DataLoader(val_subsampler, batch_size=len(val_subsampler), shuffle=False)  
 
-                val_acc = 0.0
                 for epoch in range(self.epochs):
                     # ===== TRAIN =====
                     model.train()
@@ -122,9 +115,20 @@ class MLPTrainer:
                             val_acc += calcular_accuracy(probs_val, y_val) 
 
                     val_acc /= len(val_loader)
+                    
+                    # Guardar en el historial por epoch
+                    self.train_loss_hist[r, fold, epoch] = train_loss
+                    self.val_acc_hist[r, fold, epoch] = val_acc
+
                     print(f"Época {epoch+1:02d}/{self.epochs} | Loss: {train_loss:.4f} | Val Acc: {val_acc:.4f}") 
                 
                 self.acc_por_fold[r, fold] = val_acc
+
+        # Guardar el historial completo para el análisis estadístico del tercer archivo
+        np.savez("historial_entrenamiento.npz", 
+                 train_loss=self.train_loss_hist, 
+                 val_acc=self.val_acc_hist)
+        print("\n[INFO] Historial guardado como 'historial_entrenamiento.npz'")
 
         self._generar_grafico_kfolds()
 
@@ -153,34 +157,33 @@ class MLPTrainer:
         plt.show()
 
 # PROGRAMA PRINCIPAL
-# PROGRAMA PRINCIPAL
 def main():
     tiempo_inicio = time.time()
     
     print("=== INICIANDO EXPERIMENTO SINTÉTICO (4x4) ===")
     
-    # 1. Cargar el dataset desde el archivo externo usando la ruta absoluta segura
+    # Cargar el dataset desde el archivo externo usando la ruta absoluta segura
     ruta_dataset = os.path.join(os.path.dirname(__file__), "dataset_sintetico.npz")
     print(f"Cargando dataset desde: {ruta_dataset}")
     
     if not os.path.exists(ruta_dataset):
         print(f"\n[ERROR] No se encuentra el archivo 'dataset_sintetico.npz'.")
-        print("Por favor, ejecuta primero el script 'generar_datos.py' para crearlo.")
+        print("Por favor, ejecuta primero el script de generación para crearlo.")
         return
 
     data = np.load(ruta_dataset)
     X, y = data['X'], data['y']
     
-    # 2. Análisis de imágenes repetidas cargadas
+    # Análisis de imágenes repetidas cargadas
     analizar_imagenes_repetidas(X)
     
-    K_FOLDS = 50             
+    K_FOLDS = 10             
     BATCH_NUMBER = 1        
     EPOCHS = 15             
     REPETICIONES = 1        
     LEARNING_RATE = 0.01    
     
-    # 3. Entrenar y graficar
+    # Entrenar y graficar
     trainer = MLPTrainer(
         datos_lista=[X, y], 
         k_folds=K_FOLDS, 
