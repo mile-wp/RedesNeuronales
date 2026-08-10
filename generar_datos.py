@@ -36,7 +36,9 @@ patterns = np.array([
      [0,0,1,1]]
 ], dtype=np.uint8)
 
-def generate_dataset(n_per_class=500, flip_probability=0.08, seed=1):
+"Documentar el algoritmo"
+
+def generate_dataset(n_per_class=500, flip_probability=0.5, seed=1):
     rng = np.random.default_rng(seed)
     X, y = [], []
 
@@ -49,6 +51,9 @@ def generate_dataset(n_per_class=500, flip_probability=0.08, seed=1):
             y.append(label)
 
     return np.array(X, dtype=np.float32), np.array(y, dtype=np.int64)
+
+
+
 
 def limitar_imagenes_repetidas(X, y, max_repetidas=2, seed=42):
     rng = np.random.default_rng(seed)

@@ -125,7 +125,7 @@ class MLPTrainer:
                 self.acc_por_fold[r, fold] = val_acc
 
         # Guardar el historial completo para el análisis estadístico del tercer archivo
-        np.savez("historial_entrenamiento.npz", 
+        np.savez("historial_entrenamiento_2.npz", 
                  train_loss=self.train_loss_hist, 
                  val_acc=self.val_acc_hist)
         print("\n[INFO] Historial guardado como 'historial_entrenamiento.npz'")
@@ -177,10 +177,10 @@ def main():
     # Análisis de imágenes repetidas cargadas
     analizar_imagenes_repetidas(X)
     
-    K_FOLDS = 10             
+    K_FOLDS = 5             
     BATCH_NUMBER = 1        
     EPOCHS = 15             
-    REPETICIONES = 1        
+    REPETICIONES = 25        
     LEARNING_RATE = 0.01    
     
     # Entrenar y graficar
